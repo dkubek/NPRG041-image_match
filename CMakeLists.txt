@@ -79,23 +79,17 @@ endif()
 
 # Add cli library
 add_subdirectory(third-party/cli11)
-if(NOT TARGET cli11)
-    add_library(cli11 INTERFACE IMPORTED GLOBAL)
-    target_sources(cli11 INTERFACE
+if(NOT TARGET CLI11)
+    add_library(CLI11 INTERFACE IMPORTED GLOBAL)
+    target_sources(CLI11 INTERFACE
         "${CMAKE_CURRENT_SOURCE_DIR}/third-party/cli11/include")
     target_include_directories(cli11 INTERFACE
         "${CMAKE_CURRENT_SOURCE_DIR}/third-party/cli11/include")
 endif()
 
 # Add the main executable
-add_executable(image_match apps/image_match.cpp)
-target_link_libraries(image_match
-    PRIVATE cli11 
+add_executable(csd apps/csd.cpp)
+target_link_libraries(csd
+    PRIVATE CLI11
     PRIVATE spdlog::spdlog_header_only
     )
-
-# Include libraries
-# target_link_libraries(${PROJECT_NAME}
-#     PRIVATE stb
-#     PRIVATE spdlog::spdlog_header_only
-# )
