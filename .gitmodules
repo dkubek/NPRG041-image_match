@@ -4,3 +4,6 @@
 [submodule "third-party/stb"]
 	path = third-party/stb
 	url = https://github.com/nothings/stb
+[submodule "third-party/cli11"]
+	path = third-party/cli11
+	url = https://github.com/CLIUtils/CLI11.git

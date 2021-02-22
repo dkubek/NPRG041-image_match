@@ -1,5 +1,5 @@
-docs/
-build/
+/build*
+
 # Created by https://www.toptal.com/developers/gitignore/api/cmake,c++
 # Edit at https://www.toptal.com/developers/gitignore?templates=cmake,c++
 .clangd/

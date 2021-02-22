@@ -17,6 +17,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 # Generate compile_commands.json
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# Add cmake dir to path
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+
 # Download all submodules
 find_package(Git QUIET)
 if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
@@ -38,21 +41,25 @@ endif()
 # Check submodules exist
 if(NOT EXISTS "${PROJECT_SOURCE_DIR}/third-party/spdlog/CMakeLists.txt")
     message(FATAL_ERROR
-        "The spdlog submodules was not downloaded! \
+        "The spdlog submodule was not downloaded! \
         GIT_SUBMODULE was turned off or failed. \
         Please update submodules and try again.")
 endif()
 
 if(NOT EXISTS "${PROJECT_SOURCE_DIR}/third-party/stb/stb_image.h")
     message(FATAL_ERROR
-        "The spdlog submodules was not downloaded! \
+        "The stb submodule was not downloaded! \
         GIT_SUBMODULE was turned off or failed. \
         Please update submodules and try again.")
 endif()
 
+if(NOT EXISTS "${PROJECT_SOURCE_DIR}/third-party/cli11/CMakeLists.txt")
+    message(FATAL_ERROR
+        "The CLI11 submodule was not downloaded! \
+        GIT_SUBMODULE was turned off or failed. \
+        Please update submodules and try again.")
+endif()
 
-# Add the main executable
-add_executable(image_match src/image_match.cpp)
 
 # Add the spdlog library
 add_subdirectory(third-party/spdlog)
@@ -60,19 +67,35 @@ if(NOT TARGET spdlog)
     # Stand-alone build
     find_package(spdlog REQUIRED)
 endif()
-target_sources(spdlog INTERFACE 
-    "${CMAKE_CURRENT_SOURCE_DIR}/third-party/spdlog/include")
 
 # Add stb library
-add_library(stb INTERFACE IMPORTED GLOBAL)
-target_sources(stb INTERFACE 
-    "${CMAKE_CURRENT_SOURCE_DIR}/third-party/stb/stb_image.h")
-target_include_directories(stb INTERFACE
-    "${CMAKE_CURRENT_SOURCE_DIR}/third-party/stb")
+if(NOT TARGET stb)
+    add_library(stb INTERFACE IMPORTED GLOBAL)
+    target_sources(stb INTERFACE
+        "${CMAKE_CURRENT_SOURCE_DIR}/third-party/stb/stb_image.h")
+    target_include_directories(stb INTERFACE
+        "${CMAKE_CURRENT_SOURCE_DIR}/third-party/stb")
+endif()
 
+# Add cli library
+add_subdirectory(third-party/cli11)
+if(NOT TARGET cli11)
+    add_library(cli11 INTERFACE IMPORTED GLOBAL)
+    target_sources(cli11 INTERFACE
+        "${CMAKE_CURRENT_SOURCE_DIR}/third-party/cli11/include")
+    target_include_directories(cli11 INTERFACE
+        "${CMAKE_CURRENT_SOURCE_DIR}/third-party/cli11/include")
+endif()
+
+# Add the main executable
+add_executable(image_match apps/image_match.cpp)
+target_link_libraries(image_match
+    PRIVATE cli11 
+    PRIVATE spdlog::spdlog_header_only
+    )
 
 # Include libraries
-target_link_libraries(${PROJECT_NAME}
-    PRIVATE stb
-    PRIVATE spdlog::spdlog_header_only
-)
+# target_link_libraries(${PROJECT_NAME}
+#     PRIVATE stb
+#     PRIVATE spdlog::spdlog_header_only
+# )
