@@ -87,9 +87,6 @@ if(NOT TARGET CLI11)
         "${CMAKE_CURRENT_SOURCE_DIR}/third-party/cli11/include")
 endif()
 
-# Add the main executable
-add_executable(csd apps/csd.cpp)
-target_link_libraries(csd
-    PRIVATE CLI11
-    PRIVATE spdlog::spdlog_header_only
-    )
+
+add_subdirectory(src)
+add_subdirectory(apps)
