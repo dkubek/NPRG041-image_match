@@ -1,12 +1,7 @@
 #include <algorithm>
 #include <cstdint>
-#include <filesystem>
 #include <fstream>
-#include <ios>
-#include <iostream>
 #include <memory>
-#include <stdexcept>
-#include <vector>
 
 #ifndef NDEBUG
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
@@ -17,6 +12,9 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+#define STB_IMAGE_RESIZE_IMPLEMENTATION
+#include "stb_image_resize.h"
+
 #include "image_match/image.hpp"
 
 #define MAGIC_NUMBER_BYTES 8
@@ -25,42 +23,71 @@ namespace image_match {
 
 namespace fs = std::filesystem;
 
-image_wrapper::image_wrapper(fs::path image_path)
+void
+image_wrapper_deleter::operator()(unsigned char* data) const
 {
-    data_ = stbi_load(image_path.c_str(), &width_, &height_, &channels_, 0);
+    stbi_image_free(data);
+}
 
-    if (!data_) {
+image::image(fs::path& image_path)
+{
+    int width, height, channels;
+    auto image_data = image_wrapper(
+      stbi_load(image_path.c_str(), &width, &height, &channels, 3));
+
+    if (!image_data.get() || channels != 3) {
         SPDLOG_DEBUG("Error reading file {}", image_path.string());
-        throw std::runtime_error(stbi_failure_reason());
+
+        fail_ = true;
+        fail_msg_ = stbi_failure_reason();
+        return;
     }
+
+    width_ = width;
+    height_ = height;
+    channels_ = channels;
+
+    data_ = std::move(image_data);
 }
 
-image_wrapper::image_wrapper(image_wrapper&& other)
+image::image(size_t width, size_t height, size_t channels)
+  : width_{ width }
+  , height_{ height }
+  , channels_{ channels }
 {
-    this->~image_wrapper();
-
-    data_ = other.data_;
-    width_ = other.width_;
-    height_ = other.height_;
-    channels_ = other.channels_;
+    data_ = image_wrapper(new unsigned char[width * height * channels]);
 }
 
-image_wrapper&
-image_wrapper::operator=(image_wrapper&& other)
+image
+resized(const image& im, double scale_coeff)
 {
-    this->~image_wrapper();
+    SPDLOG_DEBUG("Resizing image: width={}, height={}, channels={}\n"
+                 "scale_coeff={}",
+                 im.width(),
+                 im.height(),
+                 im.channels(),
+                 scale_coeff);
 
-    data_ = other.data_;
-    width_ = other.width_;
-    height_ = other.height_;
-    channels_ = other.channels_;
+    int out_w =
+      std::max(1, static_cast<int>(std::round(scale_coeff * im.width())));
+    int out_h =
+      std::max(1, static_cast<int>(std::round(scale_coeff * im.height())));
 
-    return *this;
-}
+    SPDLOG_DEBUG("out_w={}, out_h={}", out_w, out_h);
 
-image_wrapper::~image_wrapper()
-{
-    stbi_image_free(data_);
+    image new_image(out_w, out_h, im.channels());
+
+    stbir_resize_uint8(im.data().get(),
+                       im.width(),
+                       im.height(),
+                       0,
+                       new_image.data().get(),
+                       out_w,
+                       out_h,
+                       0,
+                       im.channels());
+
+    return new_image;
 }
 
 bool
@@ -124,7 +151,7 @@ is_valid_file(const std::filesystem::path& filepath)
 }
 
 std::vector<std::filesystem::path>
-get_image_paths(std::filesystem::path root)
+get_image_paths(std::filesystem::path& root)
 {
     root = fs::absolute(root);
     spdlog::info("Searching for images in {}", root.string());

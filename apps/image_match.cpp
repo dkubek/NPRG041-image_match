@@ -1,7 +1,6 @@
 #include <cstdlib>
 #include <filesystem>
 #include <iostream>
-#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -12,6 +11,7 @@
 
 #include "CLI/CLI.hpp"
 
+#include "image_match/csd.hpp"
 #include "image_match/image.hpp"
 
 using namespace std::filesystem;
@@ -61,16 +61,28 @@ main(int argc, char* argv[])
     for (auto&& ip : image_paths) {
         SPDLOG_DEBUG("Loading {}", ip.string());
 
-        try {
-            image_match::image_wrapper image{ ip };
-
-            SPDLOG_DEBUG("width {}, height: {}, channels: {}",
-                         image.width(),
-                         image.height(),
-                         image.channels());
-        } catch (std::runtime_error& e) {
-            spdlog::warn("Error reading {}! {}", ip.string(), e.what());
+        image_match::image im{ ip };
+        if (!im) {
+            spdlog::warn("Error reading {}! {}", ip.string(), im.fail_msg());
+            continue;
         }
+
+        SPDLOG_DEBUG("width {}, height: {}, channels: {}",
+                     im.width(),
+                     im.height(),
+                     im.channels());
+
+        SPDLOG_DEBUG(
+          "R: {}, G: {}, B={}", im[20][123][0], im[20][123][1], im[20][123][2]);
+
+        // rgb2hmmd(im);
+
+        //SPDLOG_DEBUG("H: {}, Sum: {}, Diff={}",
+        //             im[20][123][0],
+        //             im[20][123][1],
+        //             im[20][123][2]);
+
+        image_match::CSD(im, image_match::CSDType::Bin32);
     }
 
     return EXIT_SUCCESS;

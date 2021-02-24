@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.11)
 
 if(${CMAKE_VERSION} VERSION_LESS 3.12)
     cmake_policy(VERSION ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION})
@@ -18,7 +18,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Add cmake dir to path
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 # Download all submodules
 find_package(Git QUIET)
@@ -60,6 +60,13 @@ if(NOT EXISTS "${PROJECT_SOURCE_DIR}/third-party/cli11/CMakeLists.txt")
         Please update submodules and try again.")
 endif()
 
+if(NOT EXISTS "${PROJECT_SOURCE_DIR}/third-party/gsl-lite/CMakeLists.txt")
+    message(FATAL_ERROR
+        "The gsl-lite submodule was not downloaded! \
+        GIT_SUBMODULE was turned off or failed. \
+        Please update submodules and try again.")
+endif()
+
 
 # Add the spdlog library
 add_subdirectory(third-party/spdlog)
@@ -83,9 +90,13 @@ if(NOT TARGET CLI11)
     add_library(CLI11 INTERFACE IMPORTED GLOBAL)
     target_sources(CLI11 INTERFACE
         "${CMAKE_CURRENT_SOURCE_DIR}/third-party/cli11/include")
-    target_include_directories(cli11 INTERFACE
-        "${CMAKE_CURRENT_SOURCE_DIR}/third-party/cli11/include")
 endif()
+
+# Add gsl-lite
+add_subdirectory(third-party/gsl-lite)
+set( GSL_LITE_INCLUDE_DIR ${SOURCE_DIR}/include CACHE INTERNAL "Include folder for gsl-lite" )
+add_library( gsl INTERFACE )
+target_sources(gsl INTERFACE ${GSL_LITE_INCLUDE_DIR})
 
 
 add_subdirectory(src)
