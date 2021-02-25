@@ -2,6 +2,8 @@
 #include <array>
 #include <cmath>
 #include <cstdint>
+#include <numeric>
+#include <stdexcept>
 
 #ifndef NDEBUG
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
@@ -60,9 +62,13 @@ quantize(const image& im,
     for (auto&& row : qm)
         row.resize(im.width());
 
-    std::uint8_t bits, subspace, hue_bits, sum_bits;
-    bits = hue_bin_bits[0] + sum_bin_bits[0];
+    // Compute offsets of individual bins
+    std::vector<std::uint8_t> offsets(N, 0);
+    for (size_t i = 0; i + 1 < N; ++i)
+        offsets[i + 1] =
+          offsets[i] + (1 << hue_bin_bits[i]) * (1 << sum_bin_bits[i]);
 
+    std::uint8_t subspace, hue_bits, sum_bits;
     for (size_t y = 0; y < im.height(); ++y) {
         for (size_t x = 0; x < im.width(); ++x) {
             pixel p = im[y][x];
@@ -70,14 +76,15 @@ quantize(const image& im,
             // Determine the pixel subspace
             subspace = 0;
             while (p[2] > sub_bounds[subspace])
-                ++subspace;
+                subspace++;
 
             // Place the color into bins according to subspace
-            hue_bits = p[0] >> (sizeof(std::uint8_t) - hue_bin_bits[subspace]);
-            sum_bits = p[1] >> (sizeof(std::uint8_t) - sum_bin_bits[subspace]);
+            hue_bits = p[0] >> (8 - hue_bin_bits[subspace]);
+            sum_bits = p[1] >> (8 - sum_bin_bits[subspace]);
 
-            qm[y][x] = (subspace << bits) |
-                       (hue_bits << sum_bin_bits[subspace]) | sum_bits;
+            // Compute the final bin value
+            qm[y][x] = offsets[subspace] +
+                       ((hue_bits << sum_bin_bits[subspace]) | sum_bits);
         }
     }
 
@@ -116,6 +123,66 @@ quantize(const image& im, CSDType type)
     }
 }
 
+void
+scan_sector(const quantized_map& qm,
+            CSD::descriptor& d,
+            std::vector<bool>& seen,
+            size_t x_begin,
+            size_t y_begin)
+{
+    // Reset seen bit vector
+    std::fill(seen.begin(), seen.end(), false);
+
+    size_t val;
+    for (size_t dy = 0; dy < STRUCTURING_ELEMENT_SIZE; ++dy) {
+        for (size_t dx = 0; dx < STRUCTURING_ELEMENT_SIZE; ++dx) {
+            val = qm[y_begin + dy][x_begin + dx];
+            if (!seen[val]) {
+                seen[val] = true;
+                ++d[val];
+            }
+        }
+    }
+}
+
+CSD::descriptor
+scan(const quantized_map& qm, size_t bin_size)
+{
+    SPDLOG_DEBUG("Scanning quantized map with bin_size={}", bin_size);
+
+    CSD::descriptor d(bin_size, 0);
+    std::vector<bool> seen(bin_size);
+
+    size_t y_bound, x_bound;
+    y_bound = qm.size() - STRUCTURING_ELEMENT_SIZE + 1;
+    x_bound = qm[0].size() - STRUCTURING_ELEMENT_SIZE + 1;
+
+    for (size_t y = 0; y < y_bound; ++y) {
+        for (size_t x = 0; x < x_bound; ++x) {
+            scan_sector(qm, d, seen, x, y);
+        }
+    }
+
+    return d;
+}
+
+CSD::descriptor
+scan(const quantized_map& qm, CSDType type)
+{
+    SPDLOG_DEBUG("Scanning quantized map for type={}", type);
+
+    switch (type) {
+        case CSDType::Bin32:
+            return scan(qm, 32);
+        case CSDType::Bin64:
+            return scan(qm, 64);
+        case CSDType::Bin128:
+            return scan(qm, 128);
+        case CSDType::Bin256:
+            return scan(qm, 256);
+    }
+}
+
 CSD::CSD(const image& im, CSDType type)
 {
     SPDLOG_DEBUG("Generating Color Structure Desriptor type={}", type);
@@ -123,12 +190,31 @@ CSD::CSD(const image& im, CSDType type)
     auto p = compute_subsample_shift(im);
     auto resized = subsampled_shift(
       im, p, STRUCTURING_ELEMENT_SIZE, STRUCTURING_ELEMENT_SIZE);
-
     rgb2hmmd(resized);
     auto qm = quantize(resized, type);
+    auto descriptor = scan(qm, type);
 
-    // Scan
-    // Normalize
+    // Normalize the descriptor
+    for (auto&& val : descriptor)
+        val /= (im.width() - STRUCTURING_ELEMENT_SIZE + 1) *
+               (im.height() - STRUCTURING_ELEMENT_SIZE + 1);
+
+    data = descriptor;
+}
+
+float
+compare(CSD desc1, CSD desc2)
+{
+    SPDLOG_DEBUG("Comparing descriptors.");
+
+    if (desc1.type != desc2.type)
+        throw std::invalid_argument("Non-matching descriptor types.");
+
+    float acc = 0;
+    for (size_t i = 0; i < desc1.data.size(); ++i)
+        acc += std::fabs(desc1.data[i] - desc2.data[i]);
+
+    return acc;
 }
 
 }

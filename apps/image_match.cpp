@@ -72,19 +72,6 @@ main(int argc, char* argv[])
                      im.height(),
                      im.channels());
 
-        SPDLOG_DEBUG(
-          "R: {}, G: {}, B={}", im[20][123][0], im[20][123][1], im[20][123][2]);
-
-        // rgb2hmmd(im);
-
-        //SPDLOG_DEBUG("H: {}, Sum: {}, Diff={}",
-        //             im[20][123][0],
-        //             im[20][123][1],
-        //             im[20][123][2]);
-
-        image_match::CSD(im, image_match::CSDType::Bin32);
-        image_match::CSD(im, image_match::CSDType::Bin64);
-        image_match::CSD(im, image_match::CSDType::Bin128);
         image_match::CSD(im, image_match::CSDType::Bin256);
     }
 

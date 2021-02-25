@@ -19,11 +19,15 @@ enum CSDType
 
 struct CSD
 {
+    using descriptor = std::vector<float>;
+
     CSDType type;
-    std::vector<float> data;
+    descriptor data;
 
     CSD(const image& im, CSDType type);
 };
+
+float compare(CSD desc1, CSD desc2);
 
 }
 
