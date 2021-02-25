@@ -74,7 +74,10 @@ class image
     operator bool() { return !fail_; }
     std::string fail_msg() const { return fail_msg_; }
 
-    friend image resized(const image& im, double scale_coeff);
+    friend image subsampled_shift(const image& im,
+                                  std::uint32_t shift,
+                                  size_t min_width,
+                                  size_t min_height);
 
   private:
     image_wrapper data_;

@@ -59,19 +59,22 @@ image::image(size_t width, size_t height, size_t channels)
 }
 
 image
-resized(const image& im, double scale_coeff)
+subsampled_shift(const image& im,
+                 std::uint32_t shift,
+                 size_t min_width,
+                 size_t min_height)
 {
-    SPDLOG_DEBUG("Resizing image: width={}, height={}, channels={}\n"
-                 "scale_coeff={}",
+    SPDLOG_DEBUG("Subsampling image: width={}, height={}, channels={} "
+                 "shift={}, min_width={}, min_height={}",
                  im.width(),
                  im.height(),
                  im.channels(),
-                 scale_coeff);
+                 shift,
+                 min_width,
+                 min_height);
 
-    int out_w =
-      std::max(1, static_cast<int>(std::round(scale_coeff * im.width())));
-    int out_h =
-      std::max(1, static_cast<int>(std::round(scale_coeff * im.height())));
+    int out_w = std::max(min_width, im.width() >> shift);
+    int out_h = std::max(min_height, im.height() >> shift);
 
     SPDLOG_DEBUG("out_w={}, out_h={}", out_w, out_h);
 
@@ -86,6 +89,8 @@ resized(const image& im, double scale_coeff)
                        out_h,
                        0,
                        im.channels());
+
+    SPDLOG_DEBUG("Subsampled width: {}, height: {}", out_w, out_h);
 
     return new_image;
 }

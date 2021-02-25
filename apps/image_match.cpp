@@ -83,6 +83,9 @@ main(int argc, char* argv[])
         //             im[20][123][2]);
 
         image_match::CSD(im, image_match::CSDType::Bin32);
+        image_match::CSD(im, image_match::CSDType::Bin64);
+        image_match::CSD(im, image_match::CSDType::Bin128);
+        image_match::CSD(im, image_match::CSDType::Bin256);
     }
 
     return EXIT_SUCCESS;

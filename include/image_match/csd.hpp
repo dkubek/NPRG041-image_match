@@ -7,6 +7,8 @@
 
 namespace image_match {
 
+#define STRUCTURING_ELEMENT_SIZE 8
+
 enum CSDType
 {
     Bin32,
