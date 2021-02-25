@@ -10,7 +10,7 @@ project(image_match
     DESCRIPTION "Image match"    # DESCRIPTION added in CMake 3.9
     LANGUAGES CXX)
 
-add_compile_options(-Wall -Wextra -pedantic)
+#add_compile_options(-Wall -Wextra -Wno-implicit-fallthrough -Wmissing-field-initializers)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
@@ -97,6 +97,15 @@ add_subdirectory(third-party/gsl-lite)
 set( GSL_LITE_INCLUDE_DIR ${SOURCE_DIR}/include CACHE INTERNAL "Include folder for gsl-lite" )
 add_library( gsl INTERFACE )
 target_sources(gsl INTERFACE ${GSL_LITE_INCLUDE_DIR})
+
+# Add rapidjson
+add_subdirectory(third-party/rapidjson)
+add_library( RapidJSON INTERFACE )
+target_sources(RapidJSON INTERFACE
+    "${CMAKE_CURRENT_SOURCE_DIR}/third-party/rapidjson/include")
+target_include_directories(RapidJSON INTERFACE
+    "${CMAKE_CURRENT_SOURCE_DIR}/third-party/rapidjson/include")
+
 
 
 add_subdirectory(src)

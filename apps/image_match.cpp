@@ -13,6 +13,7 @@
 
 #include "image_match/csd.hpp"
 #include "image_match/image.hpp"
+#include "rapidjson/document.h"
 
 using namespace std::filesystem;
 

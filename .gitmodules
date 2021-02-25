@@ -10,3 +10,7 @@
 [submodule "third-party/gsl-lite"]
 	path = third-party/gsl-lite
 	url = https://github.com/gsl-lite/gsl-lite
+[submodule "third-party/rapidjson"]
+	path = third-party/rapidjson
+	url = https://github.com/Tencent/rapidjson
+	branch = master

@@ -68,6 +68,7 @@ quantize(const image& im,
         offsets[i + 1] =
           offsets[i] + (1 << hue_bin_bits[i]) * (1 << sum_bin_bits[i]);
 
+    // Bin individual pixels
     std::uint8_t subspace, hue_bits, sum_bits;
     for (size_t y = 0; y < im.height(); ++y) {
         for (size_t x = 0; x < im.width(); ++x) {

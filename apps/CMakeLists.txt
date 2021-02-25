@@ -4,4 +4,5 @@ target_link_libraries(image_match
     PRIVATE spdlog::spdlog_header_only
     PRIVATE image
     PRIVATE csd
+    PRIVATE RapidJSON
     )
