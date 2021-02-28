@@ -437,7 +437,7 @@ main(int argc, char* argv[])
     if (*generate_sub)
         try {
             run_generate_subcommand();
-        } catch (std::runtime_error e) {
+        } catch (std::runtime_error& e) {
             spdlog::critical(e.what());
             return EXIT_FAILURE;
         }
@@ -445,7 +445,7 @@ main(int argc, char* argv[])
     if (*match_sub)
         try {
             run_match_subcommand();
-        } catch (std::runtime_error e) {
+        } catch (std::runtime_error& e) {
             spdlog::critical(e.what());
             return EXIT_FAILURE;
         }
