@@ -123,6 +123,8 @@ quantize(const image& im, CSDType type)
                             BIN256_HUE_BIT_BIN_SIZES,
                             BIN256_SUM_BIT_BIN_SIZES);
     }
+
+    throw std::logic_error("Not implemented for given CSDType!");
 }
 
 void
@@ -183,6 +185,8 @@ scan(const quantized_map& qm, CSDType type)
         case CSDType::Bin256:
             return scan(qm, 256);
     }
+
+    throw std::logic_error("Not implemented for given CSDType!");
 }
 
 CSD::CSD(const image& im, CSDType type)
