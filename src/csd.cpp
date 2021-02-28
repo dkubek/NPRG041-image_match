@@ -183,6 +183,8 @@ scan(const quantized_map& qm, CSDType type)
         case CSDType::Bin256:
             return scan(qm, 256);
     }
+
+    throw std::logic_error("CSDType not implemented!");
 }
 
 CSD::CSD(const image& im, CSDType type)

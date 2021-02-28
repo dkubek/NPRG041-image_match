@@ -10,7 +10,7 @@ project(image_match
     DESCRIPTION "Image match"    # DESCRIPTION added in CMake 3.9
     LANGUAGES CXX)
 
-add_compile_options(-Wall -Wextra -pedantic -Werror)# -Wno-implicit-fallthrough -Wmissing-field-initializers)
+add_compile_options(-Wall -Wextra -pedantic -Werror)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
