@@ -14,20 +14,20 @@ add_library(csd
     )
 
 target_link_libraries(image
-    PUBLIC gsl::gsl-lite-v1
-    PRIVATE spdlog::spdlog_header_only
+    PUBLIC gsl
+    PRIVATE spdlog
     PRIVATE stb
     )
 
 target_link_libraries(hmmd
     PUBLIC image
-    PRIVATE spdlog::spdlog_header_only
+    PRIVATE spdlog
     )
 
 target_link_libraries(csd
     PUBLIC image
     PRIVATE hmmd
-    PRIVATE spdlog::spdlog_header_only
+    PRIVATE spdlog
     )
 
 target_include_directories(image PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../include")

@@ -1,4 +1,3 @@
-#include "CLI/Error.hpp"
 #include <algorithm>
 #include <cstdlib>
 #include <filesystem>
@@ -41,7 +40,7 @@ struct config
     path dataset{ current_path() };
     path input_image_path;
     int matches_num{ 10 };
-    int type;
+    unsigned int type;
     bool quiet_mode{ false };
     bool output_json{ false };
     bool force_regenerate{ false };
@@ -329,11 +328,12 @@ run_match_subcommand()
                         std::vector<std::pair<float, path>>,
                         similarity_pair_less>
       matches;
+    size_t matches_num = app.matches_num;
     for (auto&& [p, descriptor] : descriptors) {
         auto similarity_index =
           image_match::compare(base_descriptor, descriptor);
 
-        if (matches.size() < app.matches_num) {
+        if (matches.size() < matches_num) {
             matches.push({ similarity_index, p });
         } else {
             auto index = matches.top().first;

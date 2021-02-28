@@ -7,11 +7,9 @@
 #include <memory>
 #include <string>
 
-#include <gsl-lite/gsl-lite.hpp>
+#include "gsl/gsl-lite.hpp"
 
 namespace image_match {
-
-namespace gsl = ::gsl_lite;
 
 static const std::array<std::string, 4> SUPPORTED_IMAGE_EXTENSIONS{ ".png",
                                                                     ".jpeg",

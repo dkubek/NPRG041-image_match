@@ -10,107 +10,13 @@ project(image_match
     DESCRIPTION "Image match"    # DESCRIPTION added in CMake 3.9
     LANGUAGES CXX)
 
-add_compile_options(-Wall)# -Wextra -Wno-implicit-fallthrough -Wmissing-field-initializers)
+add_compile_options(-Wall -Wextra -pedantic -Werror)# -Wno-implicit-fallthrough -Wmissing-field-initializers)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # Generate compile_commands.json
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# Add cmake dir to path
-list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
-
-# Download all submodules
-find_package(Git QUIET)
-if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
-    option(GIT_SUBMODULE "Check submodules during build" ON)
-    if(GIT_SUBMODULE)
-        message(STATUS "Submodule update")
-        execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
-                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                        RESULT_VARIABLE GIT_SUBMOD_RESULT)
-        if(NOT GIT_SUBMOD_RESULT EQUAL "0")
-            message(FATAL_ERROR
-                "git submodule update --init failed \
-                 with ${GIT_SUBMOD_RESULT}, please checkout submodules"
-                 )
-        endif()
-    endif()
-endif()
-
-# Check submodules exist
-if(NOT EXISTS "${PROJECT_SOURCE_DIR}/third-party/spdlog/CMakeLists.txt")
-    message(FATAL_ERROR
-        "The spdlog submodule was not downloaded! \
-        GIT_SUBMODULE was turned off or failed. \
-        Please update submodules and try again.")
-endif()
-
-if(NOT EXISTS "${PROJECT_SOURCE_DIR}/third-party/stb/stb_image.h")
-    message(FATAL_ERROR
-        "The stb submodule was not downloaded! \
-        GIT_SUBMODULE was turned off or failed. \
-        Please update submodules and try again.")
-endif()
-
-if(NOT EXISTS "${PROJECT_SOURCE_DIR}/third-party/cli11/CMakeLists.txt")
-    message(FATAL_ERROR
-        "The CLI11 submodule was not downloaded! \
-        GIT_SUBMODULE was turned off or failed. \
-        Please update submodules and try again.")
-endif()
-
-if(NOT EXISTS "${PROJECT_SOURCE_DIR}/third-party/gsl-lite/CMakeLists.txt")
-    message(FATAL_ERROR
-        "The gsl-lite submodule was not downloaded! \
-        GIT_SUBMODULE was turned off or failed. \
-        Please update submodules and try again.")
-endif()
-
-
-# Add the spdlog library
-add_subdirectory(third-party/spdlog)
-if(NOT TARGET spdlog)
-    # Stand-alone build
-    find_package(spdlog REQUIRED)
-endif()
-
-# Add stb library
-if(NOT TARGET stb)
-    add_library(stb INTERFACE IMPORTED GLOBAL)
-    target_sources(stb INTERFACE
-        "${CMAKE_CURRENT_SOURCE_DIR}/third-party/stb/stb_image.h")
-    target_include_directories(stb INTERFACE
-        "${CMAKE_CURRENT_SOURCE_DIR}/third-party/stb")
-endif()
-
-# Add cli library
-add_subdirectory(third-party/cli11)
-if(NOT TARGET CLI11)
-    add_library(CLI11 INTERFACE IMPORTED GLOBAL)
-    target_sources(CLI11 INTERFACE
-        "${CMAKE_CURRENT_SOURCE_DIR}/third-party/cli11/include")
-endif()
-
-# Add gsl-lite
-add_subdirectory(third-party/gsl-lite)
-set( GSL_LITE_INCLUDE_DIR ${SOURCE_DIR}/include CACHE INTERNAL "Include folder for gsl-lite" )
-add_library( gsl INTERFACE )
-target_sources(gsl INTERFACE ${GSL_LITE_INCLUDE_DIR})
-
-# Add rapidjson
-
-add_subdirectory(third-party/rapidjson)
-add_library( RapidJSON INTERFACE )
-target_sources(RapidJSON INTERFACE
-    "${CMAKE_CURRENT_SOURCE_DIR}/third-party/rapidjson/include")
-target_include_directories(RapidJSON INTERFACE
-    "${CMAKE_CURRENT_SOURCE_DIR}/third-party/rapidjson/include")
-set(RAPIDJSON_BUILD_DOC "Build rapidjson documentation." OFF)
-set(RAPIDJSON_BUILD_EXAMPLES "Build rapidjson examples." OFF)
-set(RAPIDJSON_BUILD_TESTS "Build rapidjson perftests and unittests." OFF)
-
-
-
+add_subdirectory(third-party)
 add_subdirectory(src)
 add_subdirectory(apps)
