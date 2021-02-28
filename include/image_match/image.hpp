@@ -55,7 +55,7 @@ class image
         const image& im_;
     };
 
-    image(std::filesystem::path& image_path);
+    image(const std::filesystem::path& image_path);
     image(size_t width, size_t height, size_t channels);
 
     size_t width() const { return width_; };
@@ -91,7 +91,7 @@ class image
 };
 
 std::vector<std::filesystem::path>
-get_image_paths(std::filesystem::path& root);
+get_image_paths(const std::filesystem::path& root);
 
 }
 

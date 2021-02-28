@@ -29,7 +29,7 @@ image_wrapper_deleter::operator()(unsigned char* data) const
     stbi_image_free(data);
 }
 
-image::image(fs::path& image_path)
+image::image(const fs::path& image_path)
 {
     int width, height, channels;
     auto image_data = image_wrapper(
@@ -156,13 +156,13 @@ is_valid_file(const std::filesystem::path& filepath)
 }
 
 std::vector<std::filesystem::path>
-get_image_paths(std::filesystem::path& root)
+get_image_paths(const std::filesystem::path& root)
 {
-    root = fs::absolute(root);
-    spdlog::info("Searching for images in {}", root.string());
+    auto normalized = fs::absolute(root).lexically_normal();
+    spdlog::info("Searching for images in {}", normalized.string());
 
     std::vector<fs::path> image_paths;
-    for (auto&& dir_entry : fs::recursive_directory_iterator(root)) {
+    for (auto&& dir_entry : fs::recursive_directory_iterator(normalized)) {
         SPDLOG_DEBUG("Found file {}", dir_entry.path().string());
 
         if (is_valid_file(dir_entry.path())) {

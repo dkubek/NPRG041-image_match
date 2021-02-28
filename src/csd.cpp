@@ -3,6 +3,7 @@
 #include <cmath>
 #include <cstdint>
 #include <numeric>
+#include <sstream>
 #include <stdexcept>
 
 #ifndef NDEBUG
@@ -185,6 +186,7 @@ scan(const quantized_map& qm, CSDType type)
 }
 
 CSD::CSD(const image& im, CSDType type)
+  : type{ type }
 {
     SPDLOG_DEBUG("Generating Color Structure Desriptor type={}", type);
 
@@ -203,10 +205,16 @@ CSD::CSD(const image& im, CSDType type)
     data = descriptor;
 }
 
+CSD::CSD(const descriptor& desc, CSDType type)
+  : type{ type }
+  , data{ desc }
+{}
+
 float
-compare(CSD desc1, CSD desc2)
+compare(const CSD& desc1, const CSD& desc2)
 {
-    SPDLOG_DEBUG("Comparing descriptors.");
+    SPDLOG_DEBUG(
+      "Comparing descriptors. type1={}, type2={}", desc1.type, desc2.type);
 
     if (desc1.type != desc2.type)
         throw std::invalid_argument("Non-matching descriptor types.");
@@ -216,6 +224,25 @@ compare(CSD desc1, CSD desc2)
         acc += std::fabs(desc1.data[i] - desc2.data[i]);
 
     return acc;
+}
+
+CSDType
+csd_from_int(int t)
+{
+    switch (t) {
+        case 32:
+            return CSDType::Bin32;
+        case 64:
+            return CSDType::Bin64;
+        case 128:
+            return CSDType::Bin128;
+        case 256:
+            return CSDType::Bin256;
+    }
+
+    std::ostringstream msg;
+    msg << "Cannot find a matching CSDType for " << t;
+    throw std::invalid_argument(msg.str());
 }
 
 }

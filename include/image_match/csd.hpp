@@ -17,6 +17,9 @@ enum CSDType
     Bin256
 };
 
+CSDType
+csd_from_int(int);
+
 struct CSD
 {
     using descriptor = std::vector<float>;
@@ -25,9 +28,11 @@ struct CSD
     descriptor data;
 
     CSD(const image& im, CSDType type);
+    CSD(const descriptor& desc, CSDType type);
 };
 
-float compare(CSD desc1, CSD desc2);
+float
+compare(const CSD& desc1, const CSD& desc2);
 
 }
 
