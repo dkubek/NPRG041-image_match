@@ -29,12 +29,16 @@
 using namespace std::filesystem;
 using namespace rapidjson;
 
+/// List of available Color Structure Desriptor types.
 const std::vector<std::string> CSD_TYPES = { "32", "64", "128", "256" };
+
+/// List of valid Database filenames.
 const std::vector<std::string> DB_FILES = { "csd_32.json",
                                             "csd_64.json",
                                             "csd_128.json",
                                             "csd_256.json" };
 
+/// Global configuration for the application
 struct config
 {
     path dataset{ current_path() };
@@ -85,7 +89,7 @@ already_generated_descriptors(const Document& doc)
 {
     std::unordered_set<std::string> already_generated;
     for (auto&& v : doc.GetArray()) {
-        if (!v.HasMember("path") || v["path"].IsString())
+        if (!v.HasMember("path") || !v["path"].IsString())
             throw std::runtime_error(
               "Bad database format! \"path\" field missing or invalid!");
 
@@ -195,7 +199,9 @@ is_db_entry_valid(const Value& entry)
     return entry["descriptor"].GetArray().Size() == app.type;
 }
 
-std::vector<std::pair<path, image_match::CSD>>
+using image_descriptors = std::vector<std::pair<path, image_match::CSD>>;
+
+image_descriptors
 load_descriptors(const Document& doc)
 {
     SPDLOG_DEBUG("Loading descriptors from databse...");
@@ -275,6 +281,64 @@ struct similarity_pair_less
     }
 };
 
+image_match::CSD
+generate_descriptor_for_input_image()
+{
+    image_match::image im{ app.input_image_path };
+    if (!im) {
+        std::ostringstream msg;
+        msg << "Error reading " << app.input_image_path.string() << "!\n"
+            << im.fail_msg();
+        throw std::runtime_error(msg.str());
+    }
+
+    spdlog::info("Generating descriptor for: {}",
+                 absolute(app.input_image_path).lexically_normal().string());
+    return image_match::CSD(im, image_match::csd_from_int(app.type));
+}
+
+using matches = std::priority_queue<std::pair<float, path>,
+                                    std::vector<std::pair<float, path>>,
+                                    similarity_pair_less>;
+
+matches
+find_best_matches(const image_descriptors& descriptors,
+                  const image_match::CSD& base_descriptor)
+{
+    matches matches;
+
+    if (app.matches_num == -1)
+        app.matches_num = descriptors.size();
+
+    size_t matches_num = app.matches_num;
+    for (auto&& [p, descriptor] : descriptors) {
+        auto similarity_index =
+          image_match::compare(base_descriptor, descriptor);
+
+        if (matches.size() < matches_num) {
+            matches.push({ similarity_index, p });
+        } else {
+            auto index = matches.top().first;
+            if (similarity_index < index) {
+                matches.pop();
+                matches.push({ similarity_index, p });
+            }
+        }
+    }
+
+    return matches;
+}
+
+void
+print_matches(matches& ms)
+{
+    while (!ms.empty()) {
+        auto [index, p] = ms.top();
+        ms.pop();
+        std::cout << index << '\t' << p.string() << '\n';
+    }
+}
+
 void
 run_match_subcommand()
 {
@@ -301,54 +365,9 @@ run_match_subcommand()
     Document database;
     load_databse(db_file, database);
     auto descriptors = load_descriptors(database);
-
-    // Load image to compare
-    image_match::image im{ app.input_image_path };
-    if (!im) {
-        std::ostringstream msg;
-        msg << "Error reading " << app.input_image_path.string() << "!\n"
-            << im.fail_msg();
-        throw std::runtime_error(msg.str());
-    }
-
-    spdlog::info("Generating descriptor for: {}",
-                 absolute(app.input_image_path).lexically_normal().string());
-    auto base_descriptor =
-      image_match::CSD(im, image_match::csd_from_int(app.type));
-
-    SPDLOG_DEBUG("base_descriptor type={}, giveth={}",
-                 base_descriptor.type,
-                 image_match::csd_from_int(app.type));
-
-    // Find best match
-    if (app.matches_num == -1)
-        app.matches_num = descriptors.size();
-
-    std::priority_queue<std::pair<float, path>,
-                        std::vector<std::pair<float, path>>,
-                        similarity_pair_less>
-      matches;
-    size_t matches_num = app.matches_num;
-    for (auto&& [p, descriptor] : descriptors) {
-        auto similarity_index =
-          image_match::compare(base_descriptor, descriptor);
-
-        if (matches.size() < matches_num) {
-            matches.push({ similarity_index, p });
-        } else {
-            auto index = matches.top().first;
-            if (similarity_index < index) {
-                matches.pop();
-                matches.push({ similarity_index, p });
-            }
-        }
-    }
-
-    while (!matches.empty()) {
-        auto [index, p] = matches.top();
-        matches.pop();
-        std::cout << index << '\t' << p.string() << '\n';
-    }
+    auto base_descriptor = generate_descriptor_for_input_image();
+    auto matches = find_best_matches(descriptors, base_descriptor);
+    print_matches(matches);
 }
 
 std::string
@@ -356,7 +375,7 @@ check_type(const std::string& opt)
 {
     if (std::find(CSD_TYPES.begin(), CSD_TYPES.end(), opt) == CSD_TYPES.end()) {
         std::ostringstream msg{};
-        msg << opt << "is not a valid type.";
+        msg << opt << " is not a valid type.";
         throw CLI::ValidationError(msg.str());
     }
 
@@ -424,12 +443,6 @@ main(int argc, char* argv[])
     match_sub->add_flag("-q,--quiet", app.quiet_mode, "Enable quiet mode.");
 
     CLI11_PARSE(args, argc, argv);
-
-    SPDLOG_DEBUG("dataset={}", app.dataset.string());
-    SPDLOG_DEBUG("input_image_path={}", app.input_image_path.string());
-    SPDLOG_DEBUG("output_json={}", app.output_json);
-    SPDLOG_DEBUG("matches_num={}", app.matches_num);
-    SPDLOG_DEBUG("quiet_mode={}", app.quiet_mode);
 
     if (app.quiet_mode)
         spdlog::set_level(spdlog::level::critical);

@@ -1,5 +1,12 @@
+/**
+ * @file image.cpp
+ * @author Dávid Kubek
+ * @date 1 March 2021
+ */
+
 #include <algorithm>
 #include <cstdint>
+#include <filesystem>
 #include <fstream>
 #include <memory>
 
@@ -168,7 +175,8 @@ get_image_paths(const std::filesystem::path& root)
         if (is_valid_file(dir_entry.path())) {
             SPDLOG_DEBUG("Adding file {}", dir_entry.path().string());
 
-            image_paths.push_back(dir_entry.path());
+            image_paths.push_back(
+              fs::absolute(dir_entry.path()).lexically_normal());
         }
     }
 

@@ -1,3 +1,8 @@
+/**
+ * @file hmmd.cpp
+ * @author Dávid Kubek
+ * @date 1 March 2021
+ */
 #include "image_match/hmmd.hpp"
 
 #ifndef NDEBUG

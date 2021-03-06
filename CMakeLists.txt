@@ -10,7 +10,9 @@ project(image_match
     DESCRIPTION "Image match"    # DESCRIPTION added in CMake 3.9
     LANGUAGES CXX)
 
-add_compile_options(-Wall -Wextra -pedantic -Werror)
+#add_compile_options(-Wall -Wextra -pedantic -Werror)
+add_compile_options("$<$<CONFIG:RELEASE>:-W;-Wall;-Os;-pedantic;-ffunction-sections;-fdata-sections>")
+add_compile_options("$<$<CONFIG:DEBUG>:-W;-Wall;-O0;-g;-pedantic>")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
