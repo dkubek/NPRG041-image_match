@@ -389,7 +389,7 @@ main(int argc, char* argv[])
     spdlog::set_level(spdlog::level::debug);
 
     // Parse command line arguments
-    CLI::App args("Simple image mathiching utility.");
+    CLI::App args("Simple image matching utility.");
     args.require_subcommand(1);
 
     auto generate_sub =
