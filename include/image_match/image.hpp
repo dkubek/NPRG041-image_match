@@ -108,11 +108,8 @@ class image
      */
     image(size_t width, size_t height, size_t channels);
 
-    /// Returns the width of the image.
     size_t width() const { return width_; };
-    /// Returns the height of the image.
     size_t height() const { return height_; };
-    /// Returns the number of channels in the image.
     size_t channels() const { return channels_; };
 
     /**
