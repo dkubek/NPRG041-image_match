@@ -11,7 +11,7 @@ project(image_match
     LANGUAGES CXX)
 
 #add_compile_options(-Wall -Wextra -pedantic -Werror)
-add_compile_options("$<$<CONFIG:RELEASE>:-W;-Wall;-Os;-pedantic;-ffunction-sections;-fdata-sections>")
+add_compile_options("$<$<CONFIG:RELEASE>:-W;-Wall;-O3;-pedantic;-ffunction-sections;-fdata-sections>")
 add_compile_options("$<$<CONFIG:DEBUG>:-W;-Wall;-O0;-g;-pedantic>")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
@@ -19,6 +19,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 # Generate compile_commands.json
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-add_subdirectory(third-party)
+add_subdirectory(extern)
 add_subdirectory(src)
 add_subdirectory(apps)
