@@ -1,4 +1,4 @@
-# NSWI041 - image_match
+# NPRG041 - image_match
 
 This is a project for the NPRG041 - Programming in C++ class at Faculty of
 Mathematics and Physics, Charles University Prague.
